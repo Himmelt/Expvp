@@ -2,5 +2,5 @@
 Expvp
 
 ```
-/expvp on|off [world]
+/expvp on|off
 ```

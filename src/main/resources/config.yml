@@ -1,4 +1,4 @@
-pvpWorlds:
+expRatio: 1.0
+cmdWorlds:
   - world
-expRatios:
-  world: 0.5
+pvpPlayers: []

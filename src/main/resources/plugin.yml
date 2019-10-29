@@ -8,9 +8,8 @@ permissions:
     default: op
 commands:
   expvp:
-    usage: /expvp on|off|reload [world]
+    usage: /expvp on|off|reload
     aliases:
       - pvp
-    permission: expvp.admin
     permission-message: You need permission <expvp.admin> to execute this command.
     description: expvp commands.

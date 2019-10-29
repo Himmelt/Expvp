@@ -1,13 +1,10 @@
 package org.soraworld.expvp;
 
 import org.bukkit.Bukkit;
-import org.bukkit.command.BlockCommandSender;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.minecart.CommandMinecart;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -16,7 +13,6 @@ import org.bukkit.event.player.PlayerExpChangeEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -24,8 +20,9 @@ import java.util.HashSet;
  */
 public final class Expvp extends JavaPlugin implements Listener {
 
-    private final HashSet<String> pvps = new HashSet<>();
-    private final HashMap<String, Float> ratios = new HashMap<>();
+    private double expRatio = 0.0D;
+    private final HashSet<String> pvpPlayers = new HashSet<>();
+    private final HashSet<String> cmdWorlds = new HashSet<>();
 
     @Override
     public void onEnable() {
@@ -36,75 +33,61 @@ public final class Expvp extends JavaPlugin implements Listener {
 
     private void reload() {
         reloadConfig();
-        pvps.clear();
-        pvps.addAll(getConfig().getStringList("pvpWorlds"));
-        ratios.clear();
-        ConfigurationSection section = getConfig().getConfigurationSection("expRatios");
-        if (section != null) {
-            for (String world : section.getKeys(false)) {
-                float ratio = Float.parseFloat(section.getString(world));
-                ratios.put(world, ratio);
-            }
-        }
+        expRatio = getConfig().getDouble("expRatio", 0.0D);
+        cmdWorlds.clear();
+        cmdWorlds.addAll(getConfig().getStringList("cmdWorlds"));
+        pvpPlayers.clear();
+        pvpPlayers.addAll(getConfig().getStringList("pvpPlayers"));
     }
 
     private void save() {
-        getConfig().set("pvpWorlds", new ArrayList<>(pvps));
+        getConfig().set("expRatio", expRatio);
+        getConfig().set("cmdWorlds", new ArrayList<>(cmdWorlds));
+        getConfig().set("pvpPlayers", new ArrayList<>(pvpPlayers));
         saveConfig();
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (args.length >= 1) {
-            boolean enable;
-            if ("on".equalsIgnoreCase(args[0])) {
-                enable = true;
-            } else if ("off".equalsIgnoreCase(args[0])) {
-                enable = false;
-            } else if ("reload".equalsIgnoreCase(args[0])) {
-                reload();
-                return true;
-            } else {
-                sender.sendMessage("must param [on] or [off].");
-                return false;
-            }
-            String world;
-            if (args.length == 1) {
-                if (sender instanceof Player) {
-                    world = ((Player) sender).getWorld().getName();
-                } else if (sender instanceof BlockCommandSender) {
-                    world = ((BlockCommandSender) sender).getBlock().getWorld().getName();
-                } else if (sender instanceof CommandMinecart) {
-                    world = ((CommandMinecart) sender).getWorld().getName();
+        if (args.length == 1) {
+            if ("reload".equalsIgnoreCase(args[0])) {
+                if (sender.hasPermission("expvp.admin")) {
+                    reload();
+                    sender.sendMessage("config reloaded.");
+                    return true;
                 } else {
-                    sender.sendMessage("sender must be player or commandblock or commandminecart.");
-                    return false;
+                    sender.sendMessage(command.getPermissionMessage());
+                    return true;
                 }
-            } else {
-                world = args[1];
             }
-            if (world != null && enable) {
-                pvps.add(world);
-                sender.sendMessage("pvp for world [" + world + "] is on.");
-            } else {
-                pvps.remove(world);
-                sender.sendMessage("pvp for world [" + world + "] is off.");
+
+            if (sender instanceof Player) {
+                String world = ((Player) sender).getWorld().getName();
+                if (cmdWorlds.contains(world)) {
+                    if ("on".equalsIgnoreCase(args[0])) {
+                        pvpPlayers.add(sender.getName());
+                        sender.sendMessage("Your pvp is on.");
+                    } else if ("off".equalsIgnoreCase(args[0])) {
+                        pvpPlayers.remove(sender.getName());
+                        sender.sendMessage("Your pvp is off.");
+                    } else {
+                        sender.sendMessage("Param must be [on] or [off].");
+                        return true;
+                    }
+                    save();
+                } else {
+                    sender.sendMessage("You cant change your pvp in this world.");
+                    return true;
+                }
             }
-            save();
-        } else {
-            sender.sendMessage(command.getUsage());
         }
-        return true;
+        return false;
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlayerExpChange(PlayerExpChangeEvent event) {
-        String name = event.getPlayer().getWorld().getName();
-        if (pvps.contains(name)) {
-            int exp = event.getAmount();
-            if (exp > 0) {
-                event.setAmount(Math.round((1.0F + ratios.getOrDefault(name, 0.0F)) * exp));
-            }
+        if (pvpPlayers.contains(event.getPlayer().getName())) {
+            event.setAmount((int) Math.round((1.0D + expRatio) * event.getAmount()));
         }
     }
 
@@ -112,10 +95,13 @@ public final class Expvp extends JavaPlugin implements Listener {
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
         Entity damager = event.getDamager();
         Entity damagee = event.getEntity();
-        String world = damagee.getWorld().getName();
-        if (!pvps.contains(world) && damager instanceof Player && damagee instanceof Player) {
-            event.setDamage(0);
-            event.setCancelled(true);
+        if (damager instanceof Player && damagee instanceof Player) {
+            Player p1 = (Player) damager;
+            Player p2 = (Player) damagee;
+            if (!pvpPlayers.contains(p1.getName()) || !pvpPlayers.contains(p2.getName())) {
+                event.setDamage(0);
+                event.setCancelled(true);
+            }
         }
     }
 }
