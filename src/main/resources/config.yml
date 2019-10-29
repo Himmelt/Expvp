@@ -1,4 +1,6 @@
 expRatio: 1.0
+pvpON: 你已开启 PVP 模式, 经验加成 ${ratio}%.
+pvpOFF: 你已关闭 PVP 模式.
 cmdWorlds:
   - world
 pvpPlayers: []

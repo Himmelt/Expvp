@@ -21,6 +21,8 @@ import java.util.HashSet;
 public final class Expvp extends JavaPlugin implements Listener {
 
     private double expRatio = 0.0D;
+    private String pvpON = "Your pvp is on.";
+    private String pvpOFF = "Your pvp is off.";
     private final HashSet<String> pvpPlayers = new HashSet<>();
     private final HashSet<String> cmdWorlds = new HashSet<>();
 
@@ -34,6 +36,8 @@ public final class Expvp extends JavaPlugin implements Listener {
     private void reload() {
         reloadConfig();
         expRatio = getConfig().getDouble("expRatio", 0.0D);
+        pvpON = getConfig().getString("pvpON", "Your pvp is on.");
+        pvpOFF = getConfig().getString("pvpOFF", "Your pvp is off.");
         cmdWorlds.clear();
         cmdWorlds.addAll(getConfig().getStringList("cmdWorlds"));
         pvpPlayers.clear();
@@ -66,10 +70,10 @@ public final class Expvp extends JavaPlugin implements Listener {
                 if (cmdWorlds.contains(world)) {
                     if ("on".equalsIgnoreCase(args[0])) {
                         pvpPlayers.add(sender.getName());
-                        sender.sendMessage("Your pvp is on.");
+                        sender.sendMessage(pvpON.replace("${ratio}", Long.toString(Math.round(expRatio * 100))));
                     } else if ("off".equalsIgnoreCase(args[0])) {
                         pvpPlayers.remove(sender.getName());
-                        sender.sendMessage("Your pvp is off.");
+                        sender.sendMessage(pvpOFF);
                     } else {
                         sender.sendMessage("Param must be [on] or [off].");
                         return true;
