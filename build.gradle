@@ -1,0 +1,23 @@
+apply plugin: 'java'
+
+group = 'org.soraworld'
+version = '1.0.0'
+archivesBaseName = "Expvp"
+
+sourceCompatibility = targetCompatibility = 1.8
+
+dependencies {
+    compile 'org.spigotmc:spigot-api:1.8-R0.1-SNAPSHOT'
+}
+
+processResources {
+    inputs.property "version", project.version
+    from(sourceSets.main.resources.srcDirs) {
+        include 'plugin.yml'
+        expand 'version': project.version
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}

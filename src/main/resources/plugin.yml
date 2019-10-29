@@ -1,0 +1,16 @@
+name: Expvp
+version: ${version}
+author: Himmelt
+main: org.soraworld.expvp.Expvp
+description: Expvp Plugin.
+permissions:
+  expvp.admin:
+    default: op
+commands:
+  expvp:
+    usage: /expvp on|off|reload [world]
+    aliases:
+      - pvp
+    permission: expvp.admin
+    permission-message: You need permission <expvp.admin> to execute this command.
+    description: expvp commands.
