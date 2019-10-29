@@ -75,10 +75,14 @@ public final class Expvp extends JavaPlugin implements Listener {
                         return true;
                     }
                     save();
+                    return true;
                 } else {
                     sender.sendMessage("You cant change your pvp in this world.");
                     return true;
                 }
+            } else {
+                sender.sendMessage("This command can only run in game.");
+                return true;
             }
         }
         return false;
